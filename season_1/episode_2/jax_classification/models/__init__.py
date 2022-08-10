@@ -7,3 +7,4 @@ from .resnet import (
     ResNet200,
     ResNet18Local,
 )
+from .utils import create_model, initialize_model
