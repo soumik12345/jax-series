@@ -74,3 +74,15 @@ def train_step(
         "learning_rate": lr,
         "scale": dynamic_scale.scale,
     }
+
+
+def validation_step(state: TrainState, batch, num_classes: int):
+    logits = state.apply_fn(
+        {"params": params, "batch_stats": state.batch_stats},
+        batch["image"],
+        train=False,
+        mutable=False,
+    )
+    loss = cross_entropy_loss(logits, batch["label"], num_classes)
+    accuracy = jnp.mean(jnp.argmax(logits, -1) == labels)
+    return {"loss": loss, "accuracy": accuracy}
