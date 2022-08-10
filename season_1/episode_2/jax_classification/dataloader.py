@@ -6,8 +6,6 @@ import tensorflow_datasets as tfds
 from typing import List
 from functools import partial
 
-from .utils import at_least_x_are_equal
-
 
 class DataLoaderFromBuilder:
     def __init__(
@@ -54,18 +52,18 @@ class DataLoaderFromBuilder:
 
     def decode_example(self, example, is_train: bool):
         return {
-            "image": self.preprocess_image(image, is_train=is_train),
+            "image": self.preprocess_image(example["image"], is_train=is_train),
             "label": example["label"],
         }
 
     def create_split(
         self, split_name: str, batch_size: int, num_prefetch_examples: int
     ):
-        data_examples = dataset_builder.info.splits[split_name].num_examples
+        data_examples = self.dataset_builder.info.splits[split_name].num_examples
         split_size = data_examples // jax.process_count()
         start = jax.process_index() * split_size
         split = f"{split_name}[{start}:{start + split_size}]"
-        dataset = dataset_builder.as_dataset(
+        dataset = self.dataset_builder.as_dataset(
             split=split,
             decoders={
                 "image": tfds.decode.SkipDecoding(),
