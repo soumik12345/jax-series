@@ -7,6 +7,16 @@ from typing import List
 from functools import partial
 
 
+def trasnform_tf_batch(batch):
+    local_device_count = jax.local_device_count()
+    
+    def _transform(sample):
+        sample = sample._numpy()
+        return sample.reshape((local_device_count, -1) + sample.shape[1:])
+    
+    return jax.tree_util.tree_map(_transform, batch)
+
+
 class DataLoaderFromBuilder:
     """Reference: https://github.com/google/flax/blob/main/examples/imagenet/input_pipeline.py"""
 
@@ -57,7 +67,7 @@ class DataLoaderFromBuilder:
             "image": self.preprocess_image(example["image"], is_train=is_train),
             "label": example["label"],
         }
-
+    
     def create_split(
         self, split_name: str, batch_size: int, num_prefetch_examples: int
     ):
@@ -85,4 +95,6 @@ class DataLoaderFromBuilder:
         dataset = dataset.batch(batch_size, drop_remainder=True)
         dataset = dataset.repeat() if split_name != "train" else dataset
         dataset = dataset.prefetch(num_prefetch_examples)
-        return dataset
+        iterator = map(trasnform_tf_batch, dataset)
+        iterator = jax_utils.prefetch_to_device(iterator, 2)
+        return dataset, iterator
