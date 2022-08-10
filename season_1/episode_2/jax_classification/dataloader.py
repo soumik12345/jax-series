@@ -8,6 +8,8 @@ from functools import partial
 
 
 class DataLoaderFromBuilder:
+    """Reference: https://github.com/google/flax/blob/main/examples/imagenet/input_pipeline.py"""
+
     def __init__(
         self,
         dataset_alias: str = "imagenette",
