@@ -9,11 +9,11 @@ from functools import partial
 
 def trasnform_tf_batch(batch):
     local_device_count = jax.local_device_count()
-    
+
     def _transform(sample):
         sample = sample._numpy()
         return sample.reshape((local_device_count, -1) + sample.shape[1:])
-    
+
     return jax.tree_util.tree_map(_transform, batch)
 
 
@@ -67,7 +67,7 @@ class DataLoaderFromBuilder:
             "image": self.preprocess_image(example["image"], is_train=is_train),
             "label": example["label"],
         }
-    
+
     def create_split(
         self, split_name: str, batch_size: int, num_prefetch_examples: int
     ):
