@@ -21,7 +21,9 @@ def compute_decayed_weights(params, weight_decay: float):
     return weight_decay * 0.5 * regularized_weights
 
 
-def train_step(state: TrainState, batch, lr_schedule, weight_decay: float):
+def train_step(
+    state: TrainState, batch, lr_schedule, weight_decay: float, num_classes: int
+):
     def loss_fn(params):
         logits, new_model_state = state.apply_fn(
             {"params": params, "batch_stats": state.batch_stats},
@@ -29,7 +31,7 @@ def train_step(state: TrainState, batch, lr_schedule, weight_decay: float):
             mutable=["batch_stats"],
         )
         weight_penalty = compute_decayed_weights(params, weight_decay)
-        loss = cross_entropy_loss(logits, batch["label"]) + weight_penalty
+        loss = cross_entropy_loss(logits, batch["label"], num_classes) + weight_penalty
         return loss, (new_model_state, logits)
 
     step, dynamic_scale = state.step, state.dynamic_scale
@@ -48,11 +50,10 @@ def train_step(state: TrainState, batch, lr_schedule, weight_decay: float):
         gradient_fn = jax.value_and_grad(loss_fn, has_aux=True)
         (loss, (new_model_state, logits)), gradients = gradient_fn(state.params)
         gradients = lax.pmean(gradients, axis_name="batch")
-    metrics = lax.pmean(
-        {"loss": loss, "accuracy": jnp.mean(jnp.argmax(logits, -1) == labels)},
-        axis_name="batch",
+    loss = lax.pmean(
+        cross_entropy_loss(logits, batch["label"], num_classes), axis_name="batch"
     )
-    metrics["learning_rate"] = lr
+    accuracy = lax.pmean(jnp.mean(jnp.argmax(logits, -1) == labels), axis_name="batch")
     updated_state = state.apply_gradients(
         grads=gradients, batch_stats=new_model_state["batch_stats"]
     )
@@ -67,5 +68,9 @@ def train_step(state: TrainState, batch, lr_schedule, weight_decay: float):
         ),
         dynamic_scale=dynamic_scale,
     )
-    metrics["scale"] = dynamic_scale.scale
-    return updated_state, metrics
+    return updated_state, {
+        "loss": loss,
+        "accuracy": accuracy,
+        "learning_rate": lr,
+        "scale": dynamic_scale.scale,
+    }
