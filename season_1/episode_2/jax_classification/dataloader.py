@@ -97,4 +97,7 @@ class DataLoaderFromBuilder:
         dataset = dataset.prefetch(num_prefetch_examples)
         iterator = map(trasnform_tf_batch, dataset)
         iterator = jax_utils.prefetch_to_device(iterator, 2)
-        return dataset, iterator
+        steps_per_epoch = self.dataset_builder.info.splits[split_name].num_examples // (
+            batch_size * jax.device_count()
+        )
+        return dataset, iterator, steps_per_epoch
