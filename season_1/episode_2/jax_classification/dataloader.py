@@ -2,6 +2,8 @@ from functools import partial
 from typing import List
 
 import jax
+from flax import jax_utils
+
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
