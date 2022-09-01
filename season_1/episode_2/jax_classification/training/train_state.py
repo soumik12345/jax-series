@@ -38,7 +38,6 @@ def create_train_state(
     image_size: int,
     lr_schedule: Callable,
     momentum: float,
-    apply_half_precision: bool,
 ):
     platform = jax.local_devices()[0].platform
 

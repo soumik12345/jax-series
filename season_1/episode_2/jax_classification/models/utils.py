@@ -20,6 +20,6 @@ def initialize_model(model_key: jnp.ndarray, image_size: int, model):
         return model.init(*args)
 
     variables = init(
-        {"params": key}, jnp.ones((1, image_size, image_size, 3), model.dtype)
+        {"params": model_key}, jnp.ones((1, image_size, image_size, 3), model.dtype)
     )
     return variables["params"], variables["batch_stats"]
