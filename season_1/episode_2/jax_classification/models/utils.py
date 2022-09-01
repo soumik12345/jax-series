@@ -12,7 +12,14 @@ def create_model(model_class, apply_half_precision: bool, num_classes: int, **kw
 
 
 def initialize_model(model_key: jnp.ndarray, image_size: int, model):
-    variables = jax.jit(model.init)(
+    # variables = jax.jit(model.init)(
+    #     {"params": model_key}, jnp.ones((1, image_size, image_size, 3), model.dtype)
+    # )
+    @jax.jit
+    def init(*args):
+        return model.init(*args)
+
+    variables = init(
         {"params": model_key}, jnp.ones((1, image_size, image_size, 3), model.dtype)
     )
     return variables["params"], variables["batch_stats"]

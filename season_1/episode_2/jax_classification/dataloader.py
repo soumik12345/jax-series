@@ -1,10 +1,21 @@
+from functools import partial
+from typing import List
+
 import jax
+from flax import jax_utils
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-from typing import List
-from functools import partial
+
+def transform_tf_batch(batch):
+    local_device_count = jax.local_device_count()
+
+    def _transform(sample):
+        sample = sample._numpy()
+        return sample.reshape((local_device_count, -1) + sample.shape[1:])
+
+    return jax.tree_util.tree_map(_transform, batch)
 
 
 class DataLoaderFromBuilder:
@@ -20,7 +31,6 @@ class DataLoaderFromBuilder:
         cache: bool = False,
         private_threadpool_size: int = 48,
         try_gcs: bool = False,
-        bool=False,
     ):
         self.image_size = image_size
         self.crop_padding = crop_padding
@@ -85,4 +95,9 @@ class DataLoaderFromBuilder:
         dataset = dataset.batch(batch_size, drop_remainder=True)
         dataset = dataset.repeat() if split_name != "train" else dataset
         dataset = dataset.prefetch(num_prefetch_examples)
-        return dataset
+        iterator = map(transform_tf_batch, dataset)
+        iterator = jax_utils.prefetch_to_device(iterator, 2)
+        steps_per_epoch = self.dataset_builder.info.splits[split_name].num_examples // (
+            batch_size * jax.device_count()
+        )
+        return dataset, iterator, steps_per_epoch

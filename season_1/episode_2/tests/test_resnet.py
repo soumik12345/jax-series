@@ -2,7 +2,6 @@ import unittest
 
 import jax
 import jax.numpy as jnp
-
 from jax_classification.models import ResNet18, ResNet50
 
 
