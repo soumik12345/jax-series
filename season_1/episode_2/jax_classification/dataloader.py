@@ -93,7 +93,7 @@ class DataLoaderFromBuilder:
         dataset = dataset.batch(batch_size, drop_remainder=True)
         dataset = dataset.repeat() if split_name != "train" else dataset
         dataset = dataset.prefetch(num_prefetch_examples)
-        iterator = map(trasnform_tf_batch, dataset)
+        iterator = map(transform_tf_batch, dataset)
         iterator = jax_utils.prefetch_to_device(iterator, 2)
         steps_per_epoch = self.dataset_builder.info.splits[split_name].num_examples // (
             batch_size * jax.device_count()
