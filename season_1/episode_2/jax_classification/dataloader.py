@@ -1,13 +1,12 @@
-import jax
+from functools import partial
+from typing import List
 
+import jax
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-from typing import List
-from functools import partial
 
-
-def trasnform_tf_batch(batch):
+def transform_tf_batch(batch):
     local_device_count = jax.local_device_count()
 
     def _transform(sample):
@@ -30,7 +29,6 @@ class DataLoaderFromBuilder:
         cache: bool = False,
         private_threadpool_size: int = 48,
         try_gcs: bool = False,
-        bool=False,
     ):
         self.image_size = image_size
         self.crop_padding = crop_padding

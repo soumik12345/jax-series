@@ -1,13 +1,12 @@
 """Reference: https://github.com/google/flax/blob/main/examples/imagenet/models.py"""
 
-import jax
-import jax.numpy as jnp
+from functools import partial
+from typing import Any, Callable, Sequence, Tuple
 
 import flax
 import flax.linen as nn
-
-from functools import partial
-from typing import Any, Callable, Sequence, Tuple
+import jax
+import jax.numpy as jnp
 
 
 class ResNetBlock(nn.Module):
