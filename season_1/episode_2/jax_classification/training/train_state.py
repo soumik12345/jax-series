@@ -19,15 +19,15 @@ def create_lr_schedule(
     warmup_optimization = optax.linear_schedule(
         init_value=0.0,
         end_value=base_lr,
-        transition_steps=warmup_epochs * steps_per_epch,
+        transition_steps=warmup_epochs * steps_per_epoch,
     )
     cosine_epochs = max(num_epochs - warmup_epochs, 1)
     cosine_lr_schedule = optax.cosine_decay_schedule(
-        init_value=base_lr, decay_steps=cosine_epochs * steps_per_epch
+        init_value=base_lr, decay_steps=cosine_epochs * steps_per_epoch
     )
     lr_schedule = optax.join_schedules(
         schedules=[warmup_optimization, cosine_lr_schedule],
-        boundaries=[warmup_epochs * steps_per_epch],
+        boundaries=[warmup_epochs * steps_per_epoch],
     )
     return lr_schedule
 
